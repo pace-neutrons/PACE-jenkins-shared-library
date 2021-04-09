@@ -1,7 +1,5 @@
 /* Functions relating to the determination of current branch */
 
-package PACE.Common
-
 def get_matlab_release(String job_name) {
   return 'R' + job_name[-5..-1]
 }
