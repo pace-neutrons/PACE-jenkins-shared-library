@@ -5,18 +5,16 @@ package pace.common
 
 class PipeLineInfo {
 
-  String job_name
-  String build_type
-  String matlab_release
-  String agent
-  String release_type
-  String branch_name
+  def job_name
+  def build_type
+  def matlab_release
+  def release_type
+  def branch_name
 
   def PipeLineInfo(String job_name) {
     this.job_name = job_name
     get_build_type()
     get_matlab_release()
-    get_agent()
     get_release_type()
     get_branch_name()
   }
@@ -40,15 +38,14 @@ class PipeLineInfo {
 
   }
 
-  @NonCPS
   private void get_agent() {
     if (this.job_name.contains('Scientific-Linux-7')) {
       withCredentials([string(credentialsId: 'sl7_agent', variable: 'agent')]) {
-        this.agent = "${agent}"
+        return "${agent}"
       }
     } else if (this.job_name.contains('Windows-10')) {
       withCredentials([string(credentialsId: 'win10_agent', variable: 'agent')]) {
-        this.agent = "${agent}"
+        return "${agent}"
       }
     } else {
       this.agent = ''
