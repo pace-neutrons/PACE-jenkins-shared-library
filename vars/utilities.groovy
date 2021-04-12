@@ -45,3 +45,29 @@ def get_agent(String agentIn) {
     return ''
   }
 }
+
+/* Parse the string of Git issue labels for a label that matches Herbert_*.
+ * If a match is found, build using the Herbert branch of that name.
+ *
+ * This function will return a message beginning 'Error: ' if more than one
+ * matching Herbert branch label is found. Throwing an error directly inside
+ * this function will not fail the pipeline build.
+ */
+def get_herbert_ref_from_labels(String labels, String herbert_branch) {
+  def match = (labels =~ "Herbert_([a-zA-Z0-9_-]+)")
+  try {
+    match[1]
+    // Return an error here as there must be, at most, one Herbert branch label
+    // on the pull request. If the above line does not error, then there must
+    // be at least two.
+    return("Error: Found more than one Herbert branch label on the pull request.")
+  } catch (IndexOutOfBoundsException e1) {
+    try {
+      // There is exactly one matching label on the pull request
+      return match[0][1]
+    } catch (IndexOutOfBoundsException e2) {
+      // We get here if there are no matching labels on the pull request
+      return herbert_branch
+    }
+  }
+}

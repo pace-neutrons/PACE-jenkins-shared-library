@@ -10,6 +10,7 @@ class PipeLineInfo {
   def matlab_release
   def release_type
   def branch_name
+  def herbert_branch
   def os
 
   def PipeLineInfo(String job_name) {
@@ -18,6 +19,7 @@ class PipeLineInfo {
     get_matlab_release()
     get_release_type()
     get_branch_name()
+    get_default_herbert_branch()
     get_os()
   }
 
@@ -77,4 +79,19 @@ class PipeLineInfo {
         this.branch_name = ''
     }
   }
+
+  @NonCPS
+  private void get_default_herbert_branch() {
+    switch(this.build_type) {
+      case 'Release':
+        this.herbert_branch = ''
+
+      case 'Nightly':
+        this.herbert_branch = 'None'
+
+      default:
+        this.herbert_branch = 'master'
+    }
+  }
+
 }
