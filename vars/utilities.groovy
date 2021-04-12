@@ -1,3 +1,5 @@
+#!groovy
+
 /* Common PACE utilities */
 
 String get_param(String param_name, String default_val) {
@@ -27,5 +29,19 @@ def write_git_revision_to_file(String file_name) {
         Write-Output "\$(${git_rev_cmd})" > ${file_name}
       """
     }
+  }
+}
+
+def get_agent(String agentIn) {
+  if (agentIn == 'sl7') {
+    withCredentials([string(credentialsId: 'sl7_agent', variable: 'agent')]) {
+      return "${agent}"
+    }
+  } else if (agentIn == 'win10') {
+    withCredentials([string(credentialsId: 'win10_agent', variable: 'agent')]) {
+      return "${agent}"
+    }
+  } else {
+    return ''
   }
 }

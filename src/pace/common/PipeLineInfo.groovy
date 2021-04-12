@@ -10,6 +10,7 @@ class PipeLineInfo {
   def matlab_release
   def release_type
   def branch_name
+  def os
 
   def PipeLineInfo(String job_name) {
     this.job_name = job_name
@@ -17,6 +18,7 @@ class PipeLineInfo {
     get_matlab_release()
     get_release_type()
     get_branch_name()
+    get_os()
   }
 
   @NonCPS
@@ -35,20 +37,16 @@ class PipeLineInfo {
     } else {
       this.build_type = 'Nightly'
     }
-
   }
 
-  private void get_agent() {
+  @NonCPS
+  private void get_os() {
     if (this.job_name.contains('Scientific-Linux-7')) {
-      withCredentials([string(credentialsId: 'sl7_agent', variable: 'agent')]) {
-        return "${agent}"
-      }
+      this.os = 'sl7'
     } else if (this.job_name.contains('Windows-10')) {
-      withCredentials([string(credentialsId: 'win10_agent', variable: 'agent')]) {
-        return "${agent}"
-      }
+      this.os = 'win10'
     } else {
-      this.agent = ''
+      this.os = ''
     }
   }
 
