@@ -4,21 +4,23 @@
 
 <#
   .SYNOPSIS
-    Sets the PYTHON_EX_PATH environment variable, and executes a Matlab script to run integration tests
+    Optionally sets the PYTHON_EX_PATH environment variable for calling Python from Matlab
+    (if the CONDA_ENV_DIR env var has been set), then executes a Matlab command
   .DESCRIPTION
-    For a specific Conda environment (specified in the CONDA_ENV_DIR environment variable), determines
-    the Python executable location and uses it to set the PYTHON_EX_PATH environment variable. It then
-    uses the MATLAB_VERSION environment variable to find the Matlab executable path and runs the
-    'setup_and_run_tests' script to run the integration tests. In this script the PYTHON_EX_PATH environment
-    variable is used to activate Python from Matlab.
+    Optionally, for a specific Conda environment (specified in the CONDA_ENV_DIR environment variable),
+    determines the Python executable location and uses it to set the PYTHON_EX_PATH environment variable,
+    this allows Python to be activated from Matlab if required. It then uses the MATLAB_VERSION environment
+    variable to find the Matlab executable path and runs the command specified in the first argument to
+    this script.
   .PARAMETER command
     The MATLAB command to execute
   .EXAMPLE
     execute_matlab_command.ps1 "setup_and_run_tests"
   .NOTES
     Required environment variables:
-      CONDA_ENV_DIR  - Name of the conda environment containing the Python executable e.g. py36_pace_integration_2019b
       MATLAB_VERSION - Matlab version to use e.g. 2019b
+    Optional environment variables:
+      CONDA_ENV_DIR  - Name of the conda environment containing the Python executable e.g. py36_pace_integration_2019b
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -35,11 +37,15 @@ $MATLAB_VERSION_MAP = @{
 $matlab_command = $args[0]
 
 # Get path to Conda environment Python, and set as environment variable to
-# be accessed by the Matlab test script
-$CONDA_ENV_DIR = Get-Conda-Env-Dir
-Write-Output "$CONDA_ENV_DIR"
-$PYTHON_EX_PATH = "$CONDA_ENV_DIR\python"
-Write-And-Invoke "Set-Item -Path Env:PYTHON_EX_PATH -Value $PYTHON_EX_PATH"
+# be accessed by the Matlab command - if CONDA_ENV_DIR has been set
+Try {
+  $CONDA_ENV_DIR = Get-Conda-Env-Dir
+  Write-Output "$CONDA_ENV_DIR"
+  $PYTHON_EX_PATH = "$CONDA_ENV_DIR\python"
+  Write-And-Invoke "Set-Item -Path Env:PYTHON_EX_PATH -Value $PYTHON_EX_PATH"
+} Catch [System.ArgumentNullException] {
+  Write-Warning ("Couldn't get conda environment dir, maybe CONDA_ENV_DIR wasn't set?")
+}
 
 # Get Matlab root directory from registry, and path to MATLAB exe
 $MATLAB_REG = Get-From-Registry "HKEY_LOCAL_MACHINE\SOFTWARE\Mathworks\MATLAB\$($MATLAB_VERSION_MAP[$Env:MATLAB_VERSION])"
