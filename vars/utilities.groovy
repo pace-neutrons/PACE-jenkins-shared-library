@@ -22,11 +22,11 @@ def write_git_revision_to_file(String file_name) {
     echo "Writing Git revision to ${file_name}..."
     if (isUnix()) {
       sh """
-        echo "\$(${git_rev_cmd})" > ${file_name}
+	echo "\$(${git_rev_cmd})" > ${file_name}
       """
     } else {
       powershell """
-        Write-Output "\$(${git_rev_cmd})" > ${file_name}
+	Write-Output "\$(${git_rev_cmd})" > ${file_name}
       """
     }
   }
@@ -39,6 +39,10 @@ def get_agent(String agentIn) {
     }
   } else if (agentIn == 'win10') {
     withCredentials([string(credentialsId: 'win10_agent', variable: 'agent')]) {
+      return "${agent}"
+    }
+  } else if (agentIn == 'pacewin') {
+    withCredentials([string(credentialsId: 'pacewin_agent', variable: 'agent')]) {
       return "${agent}"
     }
   } else {

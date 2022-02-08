@@ -47,6 +47,8 @@ class PipeLineInfo {
       this.os = 'sl7'
     } else if (this.job_name.contains('Windows-10')) {
       this.os = 'win10'
+    } else if (this.job_name.contains('VM-Win-10')) {
+      this.os = 'pacewin'
     } else {
       this.os = ''
     }
@@ -56,16 +58,16 @@ class PipeLineInfo {
   private void get_release_type() {
     switch(this.build_type) {
       case 'Release':
-        this.release_type = 'release'
+	this.release_type = 'release'
 
       case 'Pull-request':
-        this.release_type = 'pull_request'
+	this.release_type = 'pull_request'
 
       case 'Nightly':
-        this.release_type = 'nightly'
+	this.release_type = 'nightly'
 
       default:
-        this.release_type = ''
+	this.release_type = ''
     }
   }
 
@@ -73,10 +75,10 @@ class PipeLineInfo {
   private void get_branch_name() {
     switch(this.build_type) {
       case 'Nightly':
-        this.branch_name = 'master'
+	this.branch_name = 'master'
 
       default:
-        this.branch_name = ''
+	this.branch_name = ''
     }
   }
 
@@ -84,13 +86,13 @@ class PipeLineInfo {
   private void get_default_herbert_branch() {
     switch(this.build_type) {
       case 'Release':
-        this.herbert_branch = ''
+	this.herbert_branch = ''
 
       case 'Nightly':
-        this.herbert_branch = 'None'
+	this.herbert_branch = 'None'
 
       default:
-        this.herbert_branch = 'master'
+	this.herbert_branch = 'master'
     }
   }
 
