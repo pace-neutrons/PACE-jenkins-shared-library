@@ -36,6 +36,8 @@ class PipeLineInfo {
       this.build_type = 'Branch'
     } else if(this.job_name.startsWith('PR-')) {
       this.build_type = 'Pull-request'
+    } else if(this.job_name.startsWith('Benchmark-')) {
+      this.build_type = 'Benchmark'
     } else {
       this.build_type = 'Nightly'
     }
@@ -58,16 +60,19 @@ class PipeLineInfo {
   private void get_release_type() {
     switch(this.build_type) {
       case 'Release':
-	this.release_type = 'release'
+       this.release_type = 'release'
 
       case 'Pull-request':
-	this.release_type = 'pull_request'
+       this.release_type = 'pull_request'
 
       case 'Nightly':
-	this.release_type = 'nightly'
+       this.release_type = 'nightly'
+
+      case 'Benchmark':
+       this.release_type = 'benchmark'
 
       default:
-	this.release_type = ''
+       this.release_type = ''
     }
   }
 
@@ -75,10 +80,10 @@ class PipeLineInfo {
   private void get_branch_name() {
     switch(this.build_type) {
       case 'Nightly':
-	this.branch_name = 'master'
+       this.branch_name = 'master'
 
       default:
-	this.branch_name = ''
+       this.branch_name = ''
     }
   }
 
@@ -86,13 +91,13 @@ class PipeLineInfo {
   private void get_default_herbert_branch() {
     switch(this.build_type) {
       case 'Release':
-	this.herbert_branch = ''
+       this.herbert_branch = ''
 
       case 'Nightly':
-	this.herbert_branch = 'None'
+       this.herbert_branch = 'None'
 
       default:
-	this.herbert_branch = 'master'
+       this.herbert_branch = 'master'
     }
   }
 
