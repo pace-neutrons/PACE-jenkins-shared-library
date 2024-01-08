@@ -47,6 +47,10 @@ class PipeLineInfo {
   private void get_os() {
     if (this.job_name.contains('Scientific-Linux-7')) {
       this.os = 'sl7'
+    } else if (this.job_name.contains('Rocky8')) {
+      this.os = 'rocky8'
+    } else if (this.job_name.contains('Rocky9')) {
+      this.os = 'rocky9'
     } else if (this.job_name.contains('Windows-10')) {
       this.os = 'win10'
     } else if (this.job_name.contains('VM-Win-10')) {
