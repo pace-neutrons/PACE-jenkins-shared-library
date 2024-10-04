@@ -5,15 +5,16 @@ import groovy.json.JsonSlurper
 def call(String git_commit) {
   // Non-PR builds will not set PR_STATUSES_URL - in which case we do not
   // want to post any statuses to Git
-  if (env.PR_STATUSES_URL) {
+  if (true) { //(env.PR_STATUSES_URL) {
     // This command is triggered when _any_ PR job succeeds. We only want to run
     // the integration test if _all_ jobs pass. So use Github API to check the statuses of
     // all workflows and if they have all succeeded then trigger the integration test.
     def jsonSlurper = new JsonSlurper()
-    def pr_info_url = new URL("https://api.github.com/repos/pace-neutrons/Horace/pulls/${env.PR_NUMBER}")
-    def pr_info = jsonSlurper.parseText(pr_info_url.getText())
-    def pr_stat_url = new URL(pr_info.statuses_url)
-    stat_txt = pr_stat_url.getText()
+    def pr_info_url = new URL("https://api.github.com/repos/pace-neutrons/Horace/pulls/${env.PR_NUMBER}").openStream()
+    def pr_info_txt = new String(pr_info_url.readAllBytes(), "UTF-8")
+    def pr_info = jsonSlurper.parseText(pr_info_txt)
+    def pr_stat_url = new URL(pr_info.statuses_url).openStream()
+    def stat_txt = new String(pr_stat_url.readAllBytes(), "UTF-8")
     // All checks completed if the number of "success" equals "pendings"
     // We assume that if we're here, that all the "pendings" have been signaled.
     def pr_statuses = jsonSlurper.parseText(stat_txt)
