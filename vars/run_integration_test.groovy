@@ -6,25 +6,36 @@ def call(String git_commit) {
   // Non-PR builds will not set PR_STATUSES_URL - in which case we do not
   // want to post any statuses to Git
   if (true) { //(env.PR_STATUSES_URL) {
-    // This command is triggered when _any_ PR job succeeds. We only want to run
-    // the integration test if _all_ jobs pass. So use Github API to check the statuses of
-    // all workflows and if they have all succeeded then trigger the integration test.
-    def jsonSlurper = new JsonSlurper()
-    def pr_info_url = new URL("https://api.github.com/repos/pace-neutrons/Horace/pulls/${env.PR_NUMBER}").openStream()
-    def pr_info_txt = new String(pr_info_url.readAllBytes(), "UTF-8")
-    def pr_info = jsonSlurper.parseText(pr_info_txt)
-    def pr_stat_url = new URL(pr_info.statuses_url).openStream()
-    def stat_txt = new String(pr_stat_url.readAllBytes(), "UTF-8")
-    // All checks completed if the number of "success" equals "pendings"
-    // We assume that if we're here, that all the "pendings" have been signaled.
-    def pr_statuses = jsonSlurper.parseText(stat_txt)
-    def all_success = 0
-    pr_statuses.eachWithIndex {
-      status, index -> 
-        if (status.state == "pending") { all_success += 1 }
-        else if (status.state == "success") { all_success -= 1 }
+    // This command is triggered when _any_ PR job succeeds. We only want to run the integration
+    // test if _all_ jobs pass. So use Github API to check the statuses of all workflows. This
+    // returns all notifications, so we assume that if we're here, that all the "pendings" were 
+    // signaled, so if we see the number of "success" equals "pendings" we know all checks passed
+    if (isUnix()) {
+      sh """
+        echo \$PR_NUMBER
+        stat_url=\$(curl -L "https://api.github.com/repos/pace-neutrons/Horace/pulls/\$PR_NUMBER" | \
+            grep statuses_url | sed "/{sha}/d" | awk -F'"' '{print \$4}')
+        echo \$stat_url
+        export scount=\$(curl -L \$stat_url | grep state | \
+            awk -F'"' 'BEGIN {ct=0} {if(\$4=="pending") {ct++} else {if(\$4=="success") ct--}} END {print ct}')
+      """
+    } else {
+      powershell """
+        gci env:*
+        Write-Output "PR_NUMBER"
+        Write-Output \$Env:PR_NUMBER
+        Write-Output "---------"
+        \$pr_info = Invoke-RestMethod -Uri "https://api.github.com/repos/pace-neutrons/Horace/pulls/\$Env:PR_NUMBER"
+        Write-Output \$pr_info
+        \$pr_stat = Invoke-RestMethod -Uri \$pr_info.statuses_url
+        \$Env:scount = 0
+        foreach (\$stat in \$pr_stat) {
+          if (\$stat.state -eq "pending") { \$Env:scount += 1 }
+          elseif (\$stat.state -eq "success") { \$Env:scount -= 1 }
+        }
+      """
     }
-    if (all_success == 0) {
+    if (env.scount == 0) {
       script {
         withCredentials([string(credentialsId: 'PACE_integration_webhook',
                               variable: 'api_token')]) {
