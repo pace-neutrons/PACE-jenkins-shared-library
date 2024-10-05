@@ -8,16 +8,19 @@ def call(String git_commit) {
   if (true) { //(env.PR_STATUSES_URL) {
     // This command is triggered when _any_ PR job succeeds. We only want to run the integration
     // test if _all_ jobs pass. So use Github API to check the statuses of all workflows. This
-    // returns all notifications, so we assume that if we're here, that all the "pendings" were 
-    // signaled, so if we see the number of "success" equals "pendings" we know all checks passed
+    // returns all notifications as a JSON with fields "context" and "state". We check all unique
+    // contexts have "state=success".
     if (isUnix()) {
       sh """
         echo \$PR_NUMBER
         stat_url=\$(curl -L "https://api.github.com/repos/pace-neutrons/Horace/pulls/\$PR_NUMBER" | \
             grep statuses_url | sed "/{sha}/d" | awk -F'"' '{print \$4}')
         echo \$stat_url
-        export scount=\$(curl -L \$stat_url | grep state | \
-            awk -F'"' 'BEGIN {ct=0} {if(\$4=="pending") {ct++} else {if(\$4=="success") ct--}} END {print ct}')
+        st=\$(curl -L \$stat_url | \
+            awk -F'"' '{if(\$2=="state") {CV=\$4} else if(\$2=="context") {ST[\$4]=ST[\$4]" "CV}} \
+              END {for (key in ST) { if(ST[key] !~ /success/) {print key} }}') 
+        if [ "\$st" == "" ]; then export all_success=1; else export all_success=0; fi
+        echo \$all_success
       """
     } else {
       powershell """
@@ -28,19 +31,25 @@ def call(String git_commit) {
         \$pr_info = Invoke-RestMethod -Uri "https://api.github.com/repos/pace-neutrons/Horace/pulls/\$Env:PR_NUMBER"
         Write-Output \$pr_info
         \$pr_stat = Invoke-RestMethod -Uri \$pr_info.statuses_url
-        \$Env:scount = 0
-        foreach (\$stat in \$pr_stat) {
-          if (\$stat.state -eq "pending") { \$Env:scount += 1 }
-          elseif (\$stat.state -eq "success") { \$Env:scount -= 1 }
+        \$sthash = @{}
+        foreach (\$stat in \$stout) {
+          if(-not \$sthash.ContainsKey(\$stat.context)) { \$sthash.Add(\$stat.context, 0) }
+          if (\$stat.state -eq "success") { \$sthash[\$stat.context] = 1 }
         }
+        \$Env:all_success = -not (\$sthash.values -ne 1)
+        Write-Output \$Env:all_success
       """
     }
-    if (env.scount == 0) {
+    println('-------')
+    println(env.all_success)
+    println('-------')
+    if (true) { //(env.all_success) {
       script {
         withCredentials([string(credentialsId: 'PACE_integration_webhook',
                               variable: 'api_token')]) {
           if (isUnix()) {
             sh """
+              echo "Triggering integration from Linux"
               curl -H "Authorization: Bearer \${api_token}" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 --request POST \
@@ -52,6 +61,7 @@ def call(String git_commit) {
           }
           else {
             powershell """
+              Write-Output "Triggering integration from Windows"
               [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
               \$payload = @{
                 "ref" = "horace_integration";
