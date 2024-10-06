@@ -45,7 +45,9 @@ def call(String git_commit) {
               if (\$stat.state -eq "success") { \$sthash[\$stat.context] = 1 }
             }
             Write-Output \$sthash
-            if (-not (\$sthash.values -ne 1)) {
+            \$all_success = \$true
+            foreach (\$ky in \$sthash.keys) { if (\$sthash[\$ky] -eq 0) { \$all_success = \$false } }
+            if (\$all_success) {
               Write-Output "Triggering integration from Windows"
               [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
               \$payload = @{
