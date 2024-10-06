@@ -12,10 +12,8 @@ def call(String git_commit) {
       withCredentials([string(credentialsId: 'PACE_integration_webhook', variable: 'api_token')]) {
         if (isUnix()) {
           sh """
-            echo \$PR_NUMBER
             stat_url=\$(curl -L "https://api.github.com/repos/pace-neutrons/Horace/pulls/\$PR_NUMBER" | \
                 grep statuses_url | sed "/{sha}/d" | awk -F'"' '{print \$4}')
-            echo \$stat_url
             st=\$(curl -L \$stat_url | \
                 awk -F'"' '{if(\$2=="state") {CV=\$4} else if(\$2=="context") {ST[\$4]=ST[\$4]" "CV}} \
                   END {for (key in ST) { if(ST[key] !~ /success/) {print key} }}') 
@@ -32,21 +30,17 @@ def call(String git_commit) {
           """
         } else {
           powershell """
-            gci env:*
-            Write-Output "PR_NUMBER"
-            Write-Output \$Env:PR_NUMBER
-            Write-Output "---------"
             \$pr_info = Invoke-RestMethod -Uri "https://api.github.com/repos/pace-neutrons/Horace/pulls/\$Env:PR_NUMBER"
-            Write-Output \$pr_info
             \$pr_stat = Invoke-RestMethod -Uri \$pr_info.statuses_url
             \$sthash = @{}
             foreach (\$stat in \$pr_stat) {
               if(-not \$sthash.ContainsKey(\$stat.context)) { \$sthash.Add(\$stat.context, 0) }
               if (\$stat.state -eq "success") { \$sthash[\$stat.context] = 1 }
             }
-            Write-Output \$sthash
             \$all_success = \$true
             foreach (\$ky in \$sthash.keys) { if (\$sthash[\$ky] -eq 0) { \$all_success = \$false } }
+            Write-Output \$sthash
+            Write-Output \$all_success
             if (\$all_success) {
               Write-Output "Triggering integration from Windows"
               [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
