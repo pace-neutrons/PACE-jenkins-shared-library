@@ -1,7 +1,5 @@
 #!groovy
 
-import groovy.json.JsonSlurper
-
 def call(String git_commit) {
   // Non-PR builds will not set PR_STATUSES_URL - in which case we do not
   // want to post any statuses to Git
@@ -28,7 +26,7 @@ def call(String git_commit) {
                    -H "X-GitHub-Api-Version: 2022-11-28" \
                    --request POST \
                    --data '{"ref":"horace_integration", \
-                            "inputs":{"jenkins_id":"$BUILD_URL", "jenkins_url":"$PR_STATUSES_URL", "horace_commit":"${git_commit}"}}' \
+                            "inputs":{"jenkins_id":"${git_commit}", "jenkins_url":"$PR_STATUSES_URL"}}' \
                    https://api.github.com/repos/pace-neutrons/pace-integration/actions/workflows/build.yml/dispatches
             fi
           """
@@ -42,19 +40,19 @@ def call(String git_commit) {
             Write-Output \$pr_info
             \$pr_stat = Invoke-RestMethod -Uri \$pr_info.statuses_url
             \$sthash = @{}
-            foreach (\$stat in \$stout) {
+            foreach (\$stat in \$pr_stat) {
               if(-not \$sthash.ContainsKey(\$stat.context)) { \$sthash.Add(\$stat.context, 0) }
               if (\$stat.state -eq "success") { \$sthash[\$stat.context] = 1 }
             }
+            Write-Output \$sthash
             if (-not (\$sthash.values -ne 1)) {
               Write-Output "Triggering integration from Windows"
               [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
               \$payload = @{
                 "ref" = "horace_integration";
                 "inputs" = @{
-                  "jenkins_id" = "$BUILD_URL";
                   "jenkins_url" = "$PR_STATUSES_URL";
-                  "horace_commit" = "${git_commit}"
+                  "jenkins_id" = "${git_commit}"
                 }
               }
               Invoke-RestMethod -URI "https://api.github.com/repos/pace-neutrons/pace-integration/actions/workflows/build.yml/dispatches" \
