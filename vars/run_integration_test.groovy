@@ -1,8 +1,7 @@
 #!groovy
 
 def call(String git_commit) {
-  // Non-PR builds will not set PR_STATUSES_URL - in which case we do not
-  // want to post any statuses to Git
+  // Non-PR builds will not set PR_STATUSES_URL (only do integration tests on PRs)
   if (env.PR_STATUSES_URL) {
     // This command is triggered when _any_ PR job succeeds. We only want to run the integration
     // test if _all_ jobs pass. So use Github API to check the statuses of all workflows. This
@@ -39,8 +38,6 @@ def call(String git_commit) {
             }
             \$all_success = \$true
             foreach (\$ky in \$sthash.keys) { if (\$sthash[\$ky] -eq 0) { \$all_success = \$false } }
-            Write-Output \$sthash
-            Write-Output \$all_success
             if (\$all_success) {
               Write-Output "Triggering integration from Windows"
               [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
