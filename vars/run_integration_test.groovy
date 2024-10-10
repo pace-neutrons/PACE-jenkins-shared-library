@@ -22,7 +22,7 @@ def call(String git_commit) {
               curl -H "Authorization: Bearer \${api_token}" \
                    -H "X-GitHub-Api-Version: 2022-11-28" \
                    --request POST \
-                   --data '{"ref":"horace_integration", \
+                   --data '{"ref":"main", \
                             "inputs":{"jenkins_id":"${git_commit}", "jenkins_url":"$PR_STATUSES_URL"}}' \
                    https://api.github.com/repos/pace-neutrons/pace-integration/actions/workflows/build.yml/dispatches
             fi
@@ -42,7 +42,7 @@ def call(String git_commit) {
               Write-Output "Triggering integration from Windows"
               [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
               \$payload = @{
-                "ref" = "horace_integration";
+                "ref" = "main";
                 "inputs" = @{
                   "jenkins_url" = "$PR_STATUSES_URL";
                   "jenkins_id" = "${git_commit}"
